@@ -38,6 +38,8 @@ param (
     [switch]$DisableAnimations,
     [switch]$TaskbarAlignLeft,
     [switch]$CombineTaskbarAlways, [switch]$CombineTaskbarWhenFull, [switch]$CombineTaskbarNever,
+    [switch]$ShowWindowsOnlyOnMainTaskbar, [switch]$ShowWindowsOnAllTaskbars, [switch]$ShowWindowsOnlyOnTheirTaskbar,
+    [switch]$CombineTaskbarAlwaysMultiMonitor, [switch]$CombineTaskbarWhenFullMultiMonitor, [switch]$CombineTaskbarNeverMultiMonitor,
     [switch]$HideSearchTb, [switch]$ShowSearchIconTb, [switch]$ShowSearchLabelTb, [switch]$ShowSearchBoxTb,
     [switch]$HideTaskview,
     [switch]$DisableStartRecommended,
@@ -1187,10 +1189,11 @@ function DisplayCustomModeOptions {
                 AddParameter 'TaskbarAlignLeft' 'Align taskbar icons to the left'
             }
 
-            # Show options for combine icon on taskbar, only continue on valid input
+
+            # Show options for combine icon on taskbar (single monitor)
             Do {
                 Write-Output ""
-                Write-Host "   Options:" -ForegroundColor Yellow
+                Write-Host "   Options (Single Monitor):" -ForegroundColor Yellow
                 Write-Host "    (n) No change" -ForegroundColor Yellow
                 Write-Host "    (1) Always" -ForegroundColor Yellow
                 Write-Host "    (2) When taskbar is full" -ForegroundColor Yellow
@@ -1199,17 +1202,46 @@ function DisplayCustomModeOptions {
             }
             while ($TbCombineTaskbar -ne 'n' -and $TbCombineTaskbar -ne '0' -and $TbCombineTaskbar -ne '1' -and $TbCombineTaskbar -ne '2' -and $TbCombineTaskbar -ne '3') 
 
-            # Select correct taskbar goup option based on user input
             switch ($TbCombineTaskbar) {
-                '1' {
-                    AddParameter 'CombineTaskbarAlways' 'Always combine taskbar buttons and hide labels'
-                }
-                '2' {
-                    AddParameter 'CombineTaskbarWhenFull' 'Combine taskbar buttons and hide labels when taskbar is full'
-                }
-                '3' {
-                    AddParameter 'CombineTaskbarNever' 'Never combine taskbar buttons and show labels'
-                }
+                '1' { AddParameter 'CombineTaskbarAlways' 'Always combine taskbar buttons and hide labels' }
+                '2' { AddParameter 'CombineTaskbarWhenFull' 'Combine taskbar buttons and hide labels when taskbar is full' }
+                '3' { AddParameter 'CombineTaskbarNever' 'Never combine taskbar buttons and show labels' }
+            }
+
+            # Show options for combine icon on taskbar (multi-monitor)
+            Do {
+                Write-Output ""
+                Write-Host "   Options (Multi-Monitor):" -ForegroundColor Yellow
+                Write-Host "    (n) No change" -ForegroundColor Yellow
+                Write-Host "    (1) Always" -ForegroundColor Yellow
+                Write-Host "    (2) When taskbar is full" -ForegroundColor Yellow
+                Write-Host "    (3) Never" -ForegroundColor Yellow
+                $TbCombineTaskbarMM = Read-Host "   Combine taskbar buttons and hide labels (multi-monitor)? (n/1/2/3)" 
+            }
+            while ($TbCombineTaskbarMM -ne 'n' -and $TbCombineTaskbarMM -ne '0' -and $TbCombineTaskbarMM -ne '1' -and $TbCombineTaskbarMM -ne '2' -and $TbCombineTaskbarMM -ne '3') 
+
+            switch ($TbCombineTaskbarMM) {
+                '1' { AddParameter 'CombineTaskbarAlwaysMultiMonitor' 'Always combine taskbar buttons (multi-monitor)' }
+                '2' { AddParameter 'CombineTaskbarWhenFullMultiMonitor' 'Combine taskbar buttons when full (multi-monitor)' }
+                '3' { AddParameter 'CombineTaskbarNeverMultiMonitor' 'Never combine taskbar buttons (multi-monitor)' }
+            }
+
+            # Show options for where to show windows on the taskbar (multi-monitor)
+            Do {
+                Write-Output ""
+                Write-Host "   Options (Multi-Monitor Fensteranzeige):" -ForegroundColor Yellow
+                Write-Host "    (n) No change" -ForegroundColor Yellow
+                Write-Host "    (1) Nur Haupt-Taskleiste" -ForegroundColor Yellow
+                Write-Host "    (2) Alle Taskleisten" -ForegroundColor Yellow
+                Write-Host "    (3) Nur auf der Taskleiste, wo das Fenster offen ist" -ForegroundColor Yellow
+                $TbShowWindowsMM = Read-Host "   Wo sollen App-Symbole auf mehreren Taskleisten angezeigt werden? (n/1/2/3)" 
+            }
+            while ($TbShowWindowsMM -ne 'n' -and $TbShowWindowsMM -ne '0' -and $TbShowWindowsMM -ne '1' -and $TbShowWindowsMM -ne '2' -and $TbShowWindowsMM -ne '3') 
+
+            switch ($TbShowWindowsMM) {
+                '1' { AddParameter 'ShowWindowsOnlyOnMainTaskbar' 'Nur Haupt-Taskleiste (multi-monitor)' }
+                '2' { AddParameter 'ShowWindowsOnAllTaskbars' 'Alle Taskleisten (multi-monitor)' }
+                '3' { AddParameter 'ShowWindowsOnlyOnTheirTaskbar' 'Nur auf der Taskleiste, wo das Fenster offen ist (multi-monitor)' }
             }
 
             # Show options for search icon on taskbar, only continue on valid input
@@ -1898,7 +1930,7 @@ switch ($script:Params.Keys) {
         continue
     }
     'CombineTaskbarAlways' {
-        RegImport "> Setting the taskbar to always combine buttons and hide labels..." "Combine_Taskbar_Never.reg"
+        RegImport "> Setting the taskbar to always combine buttons and hide labels..." "Combine_Taskbar_Always.reg"
         continue
     }
     'CombineTaskbarWhenFull' {
@@ -1907,6 +1939,30 @@ switch ($script:Params.Keys) {
     }
     'CombineTaskbarNever' {
         RegImport "> Setting the taskbar to never combine buttons or hide labels..." "Combine_Taskbar_Never.reg"
+        continue
+    }
+    'ShowWindowsOnlyOnMainTaskbar' {
+        RegImport "> Show windows only on main taskbar (multi-monitor)..." "Show_Windows_Only_On_Main_Taskbar.reg"
+        continue
+    }
+    'ShowWindowsOnAllTaskbars' {
+        RegImport "> Show all windows on all taskbars (multi-monitor)..." "Show_Windows_On_All_Taskbars.reg"
+        continue
+    }
+    'ShowWindowsOnlyOnTheirTaskbar' {
+        RegImport "> Show windows only on the taskbar where the window is open (multi-monitor)..." "Show_Windows_Only_On_Their_Taskbar.reg"
+        continue
+    }
+    'CombineTaskbarAlwaysMultiMonitor' {
+        RegImport "> Always combine taskbar buttons (multi-monitor)..." "Combine_Taskbar_Always_MultiMonitor.reg"
+        continue
+    }
+    'CombineTaskbarWhenFullMultiMonitor' {
+        RegImport "> Combine taskbar buttons when full (multi-monitor)..." "Combine_Taskbar_When_Full_MultiMonitor.reg"
+        continue
+    }
+    'CombineTaskbarNeverMultiMonitor' {
+        RegImport "> Never combine taskbar buttons (multi-monitor)..." "Combine_Taskbar_Never_MultiMonitor.reg"
         continue
     }
     'HideSearchTb' {
